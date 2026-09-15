@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="wallabot/static/logo.png" alt="Logo de Wallabot" width="180">
+</p>
+
 # Wallabot
 
 [![License](https://img.shields.io/github/license/0herculabs/wallabot)](LICENSE)
