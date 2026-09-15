@@ -1,0 +1,57 @@
+<div class="flex flex-wrap items-center gap-4 text-sm" id="filters-bar" data-base-url="{{ sort_base_url }}">
+    <div class="flex items-center gap-2">
+        <label for="sort-select" class="text-gray-500">Ordenar por</label>
+        <select id="sort-select" class="border rounded px-2 py-1.5">
+            <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Más recientes</option>
+            <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Más antiguos</option>
+            <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Precio: menor a mayor</option>
+            <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Precio: mayor a menor</option>
+            <option value="distance" {% if sort == 'distance' %}selected{% endif %}>Distancia: más cercano</option>
+        </select>
+    </div>
+    <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-gray-500">Tiendas</span>
+        <label class="flex items-center gap-1 border rounded px-2 py-1 cursor-pointer hover:bg-gray-50">
+            <input type="checkbox" class="platform-filter-checkbox" value="wallapop"
+                   {% if 'wallapop' in active_platforms %}checked{% endif %}>
+            <img src="/static/wallapop-logo.svg" alt="Wallapop" title="Wallapop" class="h-4">
+        </label>
+        <label class="flex items-center gap-1 border rounded px-2 py-1 cursor-pointer hover:bg-gray-50">
+            <input type="checkbox" class="platform-filter-checkbox" value="cashconverters"
+                   {% if 'cashconverters' in active_platforms %}checked{% endif %}>
+            <img src="/static/cashconverters-logo.png" alt="CashConverters" title="CashConverters" class="h-4 w-4 rounded-sm object-cover">
+        </label>
+        <label class="flex items-center gap-1 border rounded px-2 py-1 cursor-pointer hover:bg-gray-50">
+            <input type="checkbox" class="platform-filter-checkbox" value="cex"
+                   {% if 'cex' in active_platforms %}checked{% endif %}>
+            <img src="/static/cex-logo.svg" alt="CeX" title="CeX" class="h-4 w-4 rounded-sm object-cover">
+        </label>
+        <label class="flex items-center gap-1 border rounded px-2 py-1 cursor-pointer hover:bg-gray-50">
+            <input type="checkbox" class="platform-filter-checkbox" value="milanuncios"
+                   {% if 'milanuncios' in active_platforms %}checked{% endif %}>
+            <img src="/static/milanuncios-logo.png" alt="Milanuncios" title="Milanuncios" class="h-4 w-4 rounded-sm object-cover">
+        </label>
+    </div>
+</div>
+<script>
+(function () {
+    const bar = document.getElementById('filters-bar');
+    if (!bar) return;
+    const baseUrl = bar.dataset.baseUrl;
+    const sortSelect = document.getElementById('sort-select');
+    const checkboxes = Array.from(bar.querySelectorAll('.platform-filter-checkbox'));
+
+    function applyFilters() {
+        const checked = checkboxes.filter((c) => c.checked).map((c) => c.value);
+        const params = new URLSearchParams();
+        params.set('sort', sortSelect.value);
+        if (checked.length && checked.length < checkboxes.length) {
+            params.set('platforms', checked.join(','));
+        }
+        location.href = baseUrl + '?' + params.toString();
+    }
+
+    sortSelect.addEventListener('change', applyFilters);
+    checkboxes.forEach((cb) => cb.addEventListener('change', applyFilters));
+})();
+</script>

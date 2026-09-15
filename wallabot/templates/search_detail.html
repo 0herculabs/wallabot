@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}{{ search.name }} — Wallabot{% endblock %}
+{% block content %}
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
+    <div class="min-w-0">
+        <a href="/" class="text-sm text-slate-500 hover:underline">&larr; Mis búsquedas</a>
+        <h1 class="text-xl font-semibold break-words">
+            {{ search.name }}
+            {% include "partials/platform_icons.html" %}
+        </h1>
+    </div>
+    <div class="flex items-center gap-4 text-sm flex-wrap">
+        <a href="/searches/{{ search.id }}/discarded" class="text-slate-600 hover:underline py-1">Eliminados</a>
+        <form action="/searches/{{ search.id }}/scan" method="post">
+            <button type="submit" data-loading-text="Escaneando..."
+                    class="bg-slate-800 text-white px-3 py-2 rounded hover:bg-slate-700 w-full sm:w-auto">
+                Escanear ahora
+            </button>
+        </form>
+    </div>
+</div>
+<p class="text-sm text-gray-500 mb-1">
+    Título: "{{ search.title_keywords }}"
+    {% if search.content_keywords %} · Contenido: "{{ search.content_keywords }}"{% endif %}
+    {% if search.min_price %} · desde {{ search.min_price|price }} €{% endif %}
+    {% if search.max_price %} · hasta {{ search.max_price|price }} €{% endif %}
+</p>
+<p class="text-xs text-gray-400 mb-4">
+    {% if search.last_scan_at %}
+        Última ejecución: {{ search.last_scan_at|friendly_datetime }}
+        {% with status = search.last_scan_status %}{% include "partials/scan_status_icon.html" %}{% endwith %}
+    {% else %}
+        Todavía no se ha ejecutado ningún escaneo.
+    {% endif %}
+</p>
+
+{% set sort_base_url = "/searches/" ~ search.id %}
+<div class="mb-3">
+    {% include "partials/results_filter_bar.html" %}
+</div>
+
+{% if not results %}
+<p class="text-gray-500">Sin resultados activos (o ninguno coincide con el filtro de tienda seleccionado).</p>
+{% endif %}
+
+<div class="space-y-3">
+    {% for result in results %}
+        {% include "partials/result_card.html" %}
+    {% endfor %}
+</div>
+{% endblock %}

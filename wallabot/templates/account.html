@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Mi cuenta — Wallabot{% endblock %}
+{% block content %}
+<h1 class="text-xl font-semibold mb-4">Mi cuenta</h1>
+
+{% if message %}
+<p class="text-emerald-700 text-sm mb-3 bg-emerald-50 border border-emerald-200 rounded px-3 py-2">{{ message }}</p>
+{% endif %}
+{% if error %}
+<p class="text-red-600 text-sm mb-3 bg-red-50 border border-red-200 rounded px-3 py-2">{{ error }}</p>
+{% endif %}
+
+<p class="text-sm text-gray-600 mb-4">
+    Los avisos de resultados nuevos se activan por cada búsqueda (al crearla o editarla).
+    Aquí eliges por qué canal(es) te llegan: email, Telegram, ambos o ninguno.
+</p>
+
+<div class="grid gap-6 md:grid-cols-2">
+    <form method="post" action="/account" class="bg-white rounded-lg shadow p-6 space-y-4">
+        <h2 class="font-medium">Email</h2>
+        <div>
+            <label class="block text-sm font-medium mb-1">Email</label>
+            <input type="email" name="email" value="{{ user.email or '' }}"
+                   class="w-full border rounded px-3 py-2">
+        </div>
+        <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" name="notify_email" value="true" {% if user.notify_email %}checked{% endif %}>
+            Recibir avisos por email
+        </label>
+        <div class="flex flex-wrap items-center gap-4">
+            <button type="submit" class="bg-slate-800 text-white px-4 py-2 rounded hover:bg-slate-700">
+                Guardar
+            </button>
+            {% if user.email %}
+            <button type="submit" formaction="/account/email/test"
+                    class="text-sm underline text-slate-600 hover:text-slate-800">
+                Enviar mensaje de prueba
+            </button>
+            {% endif %}
+        </div>
+    </form>
+
+    <form method="post" action="/account/telegram" class="bg-white rounded-lg shadow p-6 space-y-4">
+        <h2 class="font-medium">Telegram</h2>
+        <div>
+            <label class="block text-sm font-medium mb-1">Chat ID</label>
+            <input type="text" name="telegram_chat_id" value="{{ user.telegram_chat_id or '' }}"
+                   placeholder="Ej: 123456789" class="w-full border rounded px-3 py-2">
+            <p class="text-xs text-gray-500 mt-1">
+                Para obtenerlo: abre un chat con el bot de Wallabot en Telegram y pulsa "Iniciar"
+                (o envíale cualquier mensaje). Después, habla con
+                <a href="https://t.me/userinfobot" target="_blank" rel="noopener" class="underline">@userinfobot</a>
+                para que te diga tu ID numérico — en un chat privado con el bot, ese ID es tu chat_id.
+            </p>
+        </div>
+        <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" name="notify_telegram" value="true" {% if user.notify_telegram %}checked{% endif %}>
+            Recibir avisos por Telegram
+        </label>
+        <div class="flex flex-wrap items-center gap-4">
+            <button type="submit" class="bg-slate-800 text-white px-4 py-2 rounded hover:bg-slate-700">
+                Guardar
+            </button>
+            {% if user.telegram_chat_id %}
+            <button type="submit" formaction="/account/telegram/test"
+                    class="text-sm underline text-slate-600 hover:text-slate-800">
+                Enviar mensaje de prueba
+            </button>
+            {% endif %}
+        </div>
+    </form>
+
+    <form method="post" action="/account/password" class="bg-white rounded-lg shadow p-6 space-y-4">
+        <h2 class="font-medium">Cambiar contraseña</h2>
+        <div>
+            <label class="block text-sm font-medium mb-1">Contraseña actual</label>
+            <input type="password" name="current_password" required class="w-full border rounded px-3 py-2">
+        </div>
+        <div>
+            <label class="block text-sm font-medium mb-1">Nueva contraseña</label>
+            <input type="password" name="new_password" required minlength="8" class="w-full border rounded px-3 py-2">
+        </div>
+        <button type="submit" class="bg-slate-800 text-white px-4 py-2 rounded hover:bg-slate-700">
+            Cambiar contraseña
+        </button>
+    </form>
+</div>
+{% endblock %}

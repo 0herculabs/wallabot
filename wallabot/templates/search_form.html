@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}{% if search %}Editar búsqueda{% else %}Nueva búsqueda{% endif %} — Wallabot{% endblock %}
+{% block content %}
+<h1 class="text-xl font-semibold mb-4">
+    {% if search %}Editar búsqueda{% else %}Nueva búsqueda{% endif %}
+</h1>
+
+{% if error %}
+<p class="text-red-600 text-sm mb-3 bg-red-50 border border-red-200 rounded px-3 py-2 max-w-xl">{{ error }}</p>
+{% endif %}
+
+<form method="post" action="{% if search %}/searches/{{ search.id }}/edit{% else %}/searches{% endif %}"
+      class="bg-white rounded-lg shadow p-6 space-y-4 max-w-xl">
+    <div>
+        <label class="block text-sm font-medium mb-1">Alias (nombre para identificarla)</label>
+        <input type="text" name="name" required value="{{ search.name if search else '' }}"
+               placeholder="ej. iPhone 12 barato" class="w-full border rounded px-3 py-2">
+    </div>
+    <div>
+        <label class="block text-sm font-medium mb-2">Tiendas donde buscar</label>
+        <div class="flex flex-wrap gap-3">
+            <label class="flex items-center gap-2 border rounded px-3 py-2 cursor-pointer hover:bg-gray-50">
+                <input type="checkbox" name="search_wallapop" value="true"
+                       {% if search is none or search.search_wallapop %}checked{% endif %}>
+                <img src="/static/wallapop-logo.svg" alt="" class="h-5">
+                Wallapop
+            </label>
+            <label class="flex items-center gap-2 border rounded px-3 py-2 cursor-pointer hover:bg-gray-50">
+                <input type="checkbox" name="search_cashconverters" value="true"
+                       {% if search and search.search_cashconverters %}checked{% endif %}>
+                <img src="/static/cashconverters-logo.png" alt="" class="h-5">
+                CashConverters
+            </label>
+            <label class="flex items-center gap-2 border rounded px-3 py-2 cursor-pointer hover:bg-gray-50">
+                <input type="checkbox" name="search_cex" value="true"
+                       {% if search and search.search_cex %}checked{% endif %}>
+                <img src="/static/cex-logo.svg" alt="" class="h-5">
+                CeX
+            </label>
+            <label class="flex items-center gap-2 border rounded px-3 py-2 cursor-pointer hover:bg-gray-50">
+                <input type="checkbox" name="search_milanuncios" value="true"
+                       {% if search and search.search_milanuncios %}checked{% endif %}>
+                <img src="/static/milanuncios-logo.png" alt="" class="h-5 w-5 rounded-sm">
+                Milanuncios
+            </label>
+        </div>
+    </div>
+    <div>
+        <label class="block text-sm font-medium mb-1">Título (palabras que debe tener el título del anuncio)</label>
+        <input type="text" name="title_keywords" required
+               value="{{ search.title_keywords if search else '' }}"
+               placeholder="ej. iphone 12" class="w-full border rounded px-3 py-2">
+        <p class="text-xs text-gray-500 mt-1">
+            Todas estas palabras deben aparecer en el título real del anuncio. Evita que un anuncio
+            "cuele" solo porque las mencione en la descripción para tener más alcance.
+        </p>
+    </div>
+    <div>
+        <label class="block text-sm font-medium mb-1">Contenido (opcional, palabras a buscar en la descripción)</label>
+        <input type="text" name="content_keywords"
+               value="{{ search.content_keywords if search and search.content_keywords else '' }}"
+               placeholder="ej. precintado" class="w-full border rounded px-3 py-2">
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+            <label class="block text-sm font-medium mb-1">Precio mínimo (€)</label>
+            <input type="number" name="min_price" step="1" min="0"
+                   value="{{ search.min_price if search and search.min_price is not none else '' }}"
+                   class="w-full border rounded px-3 py-2">
+        </div>
+        <div>
+            <label class="block text-sm font-medium mb-1">Precio máximo (€)</label>
+            <input type="number" name="max_price" step="1" min="0"
+                   value="{{ search.max_price if search and search.max_price is not none else '' }}"
+                   class="w-full border rounded px-3 py-2">
+        </div>
+    </div>
+
+    <div class="border rounded-lg p-3 bg-gray-50 space-y-2">
+        <label class="block text-sm font-medium">Ubicación (opcional, para limitar por distancia)</label>
+        <div class="flex flex-col sm:flex-row gap-2">
+            <div class="relative flex-1">
+                <input type="text" id="city-input" autocomplete="off"
+                       placeholder="Escribe una ciudad o localidad (ej. Valencia)..."
+                       class="w-full border rounded px-3 py-2">
+                <ul id="city-suggestions"
+                    class="hidden absolute z-10 left-0 right-0 mt-1 bg-white border rounded shadow max-h-60 overflow-y-auto text-sm"></ul>
+            </div>
+            <button type="button" id="geolocate-btn"
+                    class="whitespace-nowrap border rounded px-3 py-2 hover:bg-gray-100 inline-flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="1.5" class="w-4 h-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                </svg>
+                Mi ubicación
+            </button>
+        </div>
+        <p id="geocode-status" class="text-xs text-gray-500"></p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+            <div>
+                <label class="block text-sm font-medium mb-1">Latitud</label>
+                <input type="number" name="latitude" id="latitude-input" step="any"
+                       value="{{ search.latitude if search and search.latitude is not none else '' }}"
+                       placeholder="por defecto" class="w-full border rounded px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Longitud</label>
+                <input type="number" name="longitude" id="longitude-input" step="any"
+                       value="{{ search.longitude if search and search.longitude is not none else '' }}"
+                       placeholder="por defecto" class="w-full border rounded px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Radio (km)</label>
+                <input type="number" name="radius_km" step="1" min="0"
+                       value="{{ search.radius_km if search and search.radius_km is not none else '' }}"
+                       class="w-full border rounded px-3 py-2">
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium mb-1">Palabras excluidas (separadas por comas)</label>
+        <input type="text" name="excluded_words" value="{{ search.excluded_words if search and search.excluded_words else '' }}"
+               placeholder="ej. roto, piezas, busco" class="w-full border rounded px-3 py-2">
+        <p class="text-xs text-gray-500 mt-1">
+            Se descarta el anuncio si alguna de estas palabras aparece en el título o en la descripción.
+        </p>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+            <label class="block text-sm font-medium mb-1">Tipo de envío (solo aplica a Wallapop)</label>
+            <select name="shipping_filter" class="w-full border rounded px-3 py-2">
+                {% set current = search.shipping_filter if search else 'any' %}
+                <option value="any" {% if current == 'any' %}selected{% endif %}>Cualquiera</option>
+                <option value="shipping" {% if current == 'shipping' %}selected{% endif %}>Solo con envío</option>
+                <option value="inperson" {% if current == 'inperson' %}selected{% endif %}>Solo en mano</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium mb-1">Reescanear cada (minutos)</label>
+            <input type="number" name="scan_interval_minutes" min="5" step="1"
+                   value="{{ search.scan_interval_minutes if search else 60 }}"
+                   class="w-full border rounded px-3 py-2">
+        </div>
+    </div>
+    <label class="flex items-center gap-2 text-sm">
+        <input type="checkbox" name="notify_enabled" value="true"
+               {% if search is none or search.notify_enabled %}checked{% endif %}>
+        Avisarme cuando aparezcan resultados nuevos en esta búsqueda (según el canal configurado en tu cuenta)
+    </label>
+    <div class="flex flex-col sm:flex-row gap-2 pt-2">
+        <button type="submit" class="bg-slate-800 text-white px-4 py-2 rounded hover:bg-slate-700">
+            Guardar
+        </button>
+        <a href="/" class="px-4 py-2 rounded border hover:bg-gray-50 text-center">Cancelar</a>
+    </div>
+</form>
+
+<script>
+(function () {
+    const statusEl = document.getElementById('geocode-status');
+    const latInput = document.getElementById('latitude-input');
+    const lonInput = document.getElementById('longitude-input');
+    const cityInput = document.getElementById('city-input');
+    const suggestionsEl = document.getElementById('city-suggestions');
+
+    let debounceTimer = null;
+    let controller = null;
+
+    function hideSuggestions() {
+        suggestionsEl.classList.add('hidden');
+        suggestionsEl.innerHTML = '';
+    }
+
+    function selectSuggestion(item) {
+        latInput.value = item.lat.toFixed(6);
+        lonInput.value = item.lon.toFixed(6);
+        cityInput.value = item.display_name;
+        statusEl.textContent = 'Ubicación seleccionada: ' + item.display_name;
+        hideSuggestions();
+    }
+
+    cityInput.addEventListener('input', () => {
+        const q = cityInput.value.trim();
+        clearTimeout(debounceTimer);
+        if (q.length < 3) {
+            hideSuggestions();
+            statusEl.textContent = '';
+            return;
+        }
+        debounceTimer = setTimeout(async () => {
+            if (controller) controller.abort();
+            controller = new AbortController();
+            statusEl.textContent = 'Buscando...';
+            try {
+                const res = await fetch('/geocode/suggest?q=' + encodeURIComponent(q), { signal: controller.signal });
+                const items = await res.json();
+                suggestionsEl.innerHTML = '';
+                if (!items.length) {
+                    const li = document.createElement('li');
+                    li.textContent = 'Sin resultados';
+                    li.className = 'px-3 py-2 text-gray-400';
+                    suggestionsEl.appendChild(li);
+                } else {
+                    items.forEach((item) => {
+                        const li = document.createElement('li');
+                        li.textContent = item.display_name;
+                        li.className = 'px-3 py-2 hover:bg-gray-100 cursor-pointer';
+                        li.addEventListener('click', () => selectSuggestion(item));
+                        suggestionsEl.appendChild(li);
+                    });
+                }
+                suggestionsEl.classList.remove('hidden');
+                statusEl.textContent = '';
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    statusEl.textContent = 'Error buscando ubicaciones.';
+                }
+            }
+        }, 400);
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!cityInput.contains(e.target) && !suggestionsEl.contains(e.target)) {
+            hideSuggestions();
+        }
+    });
+
+    document.getElementById('geolocate-btn').addEventListener('click', () => {
+        if (!navigator.geolocation) {
+            statusEl.textContent = 'Tu navegador no soporta geolocalización.';
+            return;
+        }
+        statusEl.textContent = 'Detectando ubicación...';
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                latInput.value = pos.coords.latitude.toFixed(6);
+                lonInput.value = pos.coords.longitude.toFixed(6);
+                statusEl.textContent = 'Ubicación detectada automáticamente.';
+            },
+            () => {
+                statusEl.textContent = 'No se pudo detectar la ubicación (revisa los permisos o usa la búsqueda por ciudad).';
+            }
+        );
+    });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ search.name }}</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+{% macro item_card(item, show_old_price=False) %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px; border:1px solid #e5e7eb; border-radius:10px;">
+  <tr>
+    {% if item.image_url %}
+    <td width="84" style="padding:12px 0 12px 12px;">
+      <a href="{{ item.url }}">
+        <img src="{{ item.image_url }}" width="72" height="72" alt=""
+             style="display:block; border-radius:8px; object-fit:cover; width:72px; height:72px; background-color:#f3f4f6;">
+      </a>
+    </td>
+    {% endif %}
+    <td style="padding:12px; vertical-align:middle;">
+      <span style="display:inline-block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; padding:2px 6px; border-radius:4px; margin-bottom:4px;
+        {% if item.platform == 'cashconverters' %}background-color:#fdf0d5; color:#92400e;
+        {% elif item.platform == 'cex' %}background-color:#fee2e2; color:#b91c1c;
+        {% elif item.platform == 'milanuncios' %}background-color:#dcfce7; color:#15803d;
+        {% else %}background-color:#ccfbf1; color:#0f766e;{% endif %}">
+        {% if item.platform == 'cashconverters' %}CashConverters{% elif item.platform == 'cex' %}CeX{% elif item.platform == 'milanuncios' %}Milanuncios{% else %}Wallapop{% endif %}
+      </span>
+      <br>
+      <a href="{{ item.url }}" style="color:#111827; font-size:14px; font-weight:600; text-decoration:none; line-height:1.35;">
+        {{ item.title }}
+      </a>
+      <div style="margin-top:5px;">
+        {% if show_old_price and item.previous_price %}
+        <span style="font-size:13px; color:#9ca3af; text-decoration:line-through;">{{ item.previous_price|price }} €</span>
+        <span style="font-size:16px; font-weight:700; color:#dc2626;"> {{ item.price|price }} {{ item.currency or '' }}</span>
+        {% else %}
+        <span style="font-size:16px; font-weight:700; color:#059669;">{{ item.price|price }} {{ item.currency or '' }}</span>
+        {% endif %}
+      </div>
+      {% if item.location %}
+      <div style="margin-top:2px; font-size:12px; color:#9ca3af;">{{ item.location }}</div>
+      {% endif %}
+    </td>
+  </tr>
+</table>
+{% endmacro %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f3f4f6; padding:24px 12px;">
+  <tr>
+    <td align="center">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:12px; overflow:hidden;">
+        <tr>
+          <td style="background-color:#1e293b; padding:18px 24px;">
+            <table role="presentation" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="vertical-align:middle; padding-right:10px;">
+                  <img src="cid:logo" width="30" height="30" alt="" style="display:block; border-radius:6px;">
+                </td>
+                <td style="vertical-align:middle;">
+                  <span style="color:#ffffff; font-size:17px; font-weight:600;">Wallabot</span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px 24px 8px;">
+            <h1 style="margin:0 0 4px; font-size:18px; line-height:1.4; color:#111827;">
+              {% if results %}{{ results|length }} novedad{{ 'es' if results|length != 1 else '' }}{% endif %}
+              {% if results and price_drops %} y {% endif %}
+              {% if price_drops %}{{ price_drops|length }} bajada{{ 's' if price_drops|length != 1 else '' }} de precio{% endif %}
+              en &ldquo;{{ search.name }}&rdquo;
+            </h1>
+            <p style="margin:0 0 20px; font-size:13px; color:#6b7280;">
+              Título: &ldquo;{{ search.title_keywords }}&rdquo;{% if search.content_keywords %} · Contenido: &ldquo;{{ search.content_keywords }}&rdquo;{% endif %}{% if search.min_price %} · desde {{ search.min_price|price }} €{% endif %}{% if search.max_price %} · hasta {{ search.max_price|price }} €{% endif %}
+            </p>
+          </td>
+        </tr>
+        {% if results %}
+        <tr>
+          <td style="padding:0 24px;">
+            <p style="margin:0 0 8px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; color:#6b7280;">Nuevos</p>
+            {% for item in results %}{{ item_card(item) }}{% endfor %}
+          </td>
+        </tr>
+        {% endif %}
+        {% if price_drops %}
+        <tr>
+          <td style="padding:8px 24px 0;">
+            <p style="margin:0 0 8px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; color:#6b7280;">Bajadas de precio</p>
+            {% for item in price_drops %}{{ item_card(item, show_old_price=True) }}{% endfor %}
+          </td>
+        </tr>
+        {% endif %}
+        {% if search_url %}
+        <tr>
+          <td style="padding:8px 24px 24px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center">
+                  <a href="{{ search_url }}"
+                     style="display:inline-block; background-color:#1e293b; color:#ffffff; text-decoration:none; font-size:14px; font-weight:600; padding:11px 22px; border-radius:8px;">
+                    Ver todos los resultados
+                  </a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        {% endif %}
+        <tr>
+          <td style="padding:14px 24px; background-color:#f9fafb; border-top:1px solid #e5e7eb;">
+            <p style="margin:0; font-size:11px; color:#9ca3af; text-align:center;">
+              Wallabot · puedes desactivar estos avisos editando esta búsqueda
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Iniciar sesión — Wallabot{% endblock %}
+{% block content %}
+<div class="max-w-sm mx-auto mt-10 sm:mt-16 bg-white p-6 rounded-lg shadow">
+    <img src="/static/logo.png" alt="Wallabot" class="h-20 w-20 mx-auto mb-2">
+    <h1 class="text-xl font-semibold mb-4 text-center">Wallabot</h1>
+    {% if error %}
+    <p class="text-red-600 text-sm mb-3">{{ error }}</p>
+    {% endif %}
+    <form method="post" action="/login" class="space-y-3">
+        <div>
+            <label class="block text-sm font-medium mb-1">Usuario</label>
+            <input type="text" name="username" required autofocus
+                   class="w-full border rounded px-3 py-2">
+        </div>
+        <div>
+            <label class="block text-sm font-medium mb-1">Contraseña</label>
+            <input type="password" name="password" required
+                   class="w-full border rounded px-3 py-2">
+        </div>
+        <button type="submit" class="w-full bg-slate-800 text-white rounded py-2 hover:bg-slate-700">
+            Entrar
+        </button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Usuarios — Wallabot{% endblock %}
+{% block content %}
+<h1 class="text-xl font-semibold mb-4">Usuarios</h1>
+
+{% if error %}
+<p class="text-red-600 text-sm mb-3">{{ error }}</p>
+{% endif %}
+
+<div class="bg-white rounded-lg shadow divide-y mb-6">
+    {% for u in users %}
+    <div class="p-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 {% if not u.is_active %}opacity-60{% endif %}">
+        <div class="min-w-0">
+            <span class="font-medium break-words">{{ u.username }}</span>
+            {% if u.is_admin %}<span class="text-xs bg-slate-800 text-white rounded px-2 py-0.5 ml-1">admin</span>{% endif %}
+            {% if not u.is_active %}<span class="text-xs text-gray-500 ml-1">(desactivado)</span>{% endif %}
+            {% if u.email %}<div class="text-sm text-gray-500 break-words">{{ u.email }}</div>{% endif %}
+        </div>
+        <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-sm lg:flex-shrink-0">
+            <form action="/admin/users/{{ u.id }}/password" method="post" class="flex gap-2">
+                <input type="password" name="new_password" placeholder="Nueva contraseña" required
+                       class="flex-1 sm:flex-none border rounded px-2 py-1.5 text-base sm:text-sm min-w-0">
+                <button type="submit" class="text-slate-600 hover:underline whitespace-nowrap py-1">Cambiar</button>
+            </form>
+            <div class="flex items-center gap-3">
+                <form action="/admin/users/{{ u.id }}/toggle" method="post">
+                    <button type="submit" class="text-slate-600 hover:underline whitespace-nowrap py-1">
+                        {% if u.is_active %}Desactivar{% else %}Activar{% endif %}
+                    </button>
+                </form>
+                {% if u.id != user.id %}
+                <form action="/admin/users/{{ u.id }}/delete" method="post"
+                      onsubmit="return confirm('¿Borrar el usuario {{ u.username }}?');">
+                    <button type="submit" class="text-red-600 hover:underline whitespace-nowrap py-1">Borrar</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<h2 class="text-lg font-semibold mb-2">Crear usuario</h2>
+<form method="post" action="/admin/users" class="bg-white rounded-lg shadow p-6 space-y-3 max-w-md">
+    <div>
+        <label class="block text-sm font-medium mb-1">Usuario</label>
+        <input type="text" name="username" required class="w-full border rounded px-3 py-2">
+    </div>
+    <div>
+        <label class="block text-sm font-medium mb-1">Contraseña</label>
+        <input type="password" name="password" required class="w-full border rounded px-3 py-2">
+    </div>
+    <div>
+        <label class="block text-sm font-medium mb-1">Email (opcional)</label>
+        <input type="email" name="email" class="w-full border rounded px-3 py-2">
+    </div>
+    <label class="flex items-center gap-2 text-sm">
+        <input type="checkbox" name="is_admin" value="true">
+        Es administrador
+    </label>
+    <button type="submit" class="bg-slate-800 text-white px-4 py-2 rounded hover:bg-slate-700">
+        Crear
+    </button>
+</form>
+{% endblock %}

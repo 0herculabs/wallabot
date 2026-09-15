@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Eliminados — {{ search.name }} — Wallabot{% endblock %}
+{% block content %}
+<div class="mb-4">
+    <a href="/searches/{{ search.id }}" class="text-sm text-slate-500 hover:underline">&larr; {{ search.name }}</a>
+    <h1 class="text-xl font-semibold">Eliminados</h1>
+</div>
+
+{% set sort_base_url = "/searches/" ~ search.id ~ "/discarded" %}
+<div class="mb-3">
+    {% include "partials/results_filter_bar.html" %}
+</div>
+
+{% if not results %}
+<p class="text-gray-500">No hay resultados eliminados (o ninguno coincide con el filtro de tienda seleccionado).</p>
+{% endif %}
+
+<div class="space-y-3">
+    {% for result in results %}
+        {% include "partials/result_card.html" %}
+    {% endfor %}
+</div>
+{% endblock %}

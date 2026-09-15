@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Wallabot{% endblock %}</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16.png">
+    <link rel="shortcut icon" href="/static/favicon.ico">
+    <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+</head>
+<body class="bg-gray-100 min-h-screen text-gray-900">
+    {% if user %}
+    <nav class="bg-slate-800 text-white px-4 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <a href="/" class="flex items-center gap-2 font-semibold text-lg">
+            <img src="/static/logo.png" alt="" class="h-8 w-8 rounded">
+            Wallabot
+        </a>
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+            <div class="relative">
+                <button id="notif-bell" type="button" class="relative p-1 -m-1 leading-none" aria-label="Notificaciones">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="1.5" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                    </svg>
+                    <span id="notif-badge" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[10px] leading-none rounded-full px-1.5 py-0.5">0</span>
+                </button>
+                <div id="notif-panel" class="hidden absolute right-0 mt-2 w-80 max-w-[85vw] bg-white text-gray-900 rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto z-20">
+                    <div id="notif-list" class="divide-y divide-gray-100"></div>
+                    <p id="notif-empty" class="hidden p-4 text-sm text-gray-500 text-center">Sin novedades</p>
+                </div>
+            </div>
+            <span class="truncate max-w-[40vw] sm:max-w-none">{{ user.username }}</span>
+            <a href="/account" class="hover:underline py-1">Mi cuenta</a>
+            {% if user.is_admin %}
+            <a href="/admin/users" class="hover:underline py-1">Usuarios</a>
+            {% endif %}
+            <form action="/logout" method="post">
+                <button type="submit" class="hover:underline py-1">Salir</button>
+            </form>
+        </div>
+    </nav>
+    <script>
+    (function () {
+        const bell = document.getElementById('notif-bell');
+        if (!bell) return;
+        const badge = document.getElementById('notif-badge');
+        const panel = document.getElementById('notif-panel');
+        const list = document.getElementById('notif-list');
+        const emptyMsg = document.getElementById('notif-empty');
+
+        function buildItem(item) {
+            const a = document.createElement('a');
+            a.href = '/searches/' + item.search_id;
+            a.className = 'flex gap-3 p-3 hover:bg-gray-50 items-center';
+
+            if (item.image_url) {
+                const img = document.createElement('img');
+                img.src = item.image_url;
+                img.alt = '';
+                img.className = 'w-12 h-12 object-cover rounded flex-shrink-0';
+                a.appendChild(img);
+            }
+
+            const info = document.createElement('div');
+            info.className = 'min-w-0 flex-1';
+
+            const title = document.createElement('div');
+            title.className = 'text-sm font-medium text-gray-900 truncate flex items-center gap-1.5';
+            const storeLogos = {
+                cashconverters: '/static/cashconverters-logo.png',
+                cex: '/static/cex-logo.svg',
+                milanuncios: '/static/milanuncios-logo.png',
+                wallapop: '/static/wallapop-logo.svg',
+            };
+            const storeIcon = document.createElement('img');
+            storeIcon.alt = '';
+            storeIcon.className = item.platform === 'wallapop' ? 'h-3 flex-shrink-0' : 'h-3 w-3 rounded-sm flex-shrink-0';
+            storeIcon.src = storeLogos[item.platform] || storeLogos.wallapop;
+            title.appendChild(storeIcon);
+            const titleText = document.createElement('span');
+            titleText.className = 'truncate';
+            titleText.textContent = item.title;
+            title.appendChild(titleText);
+            info.appendChild(title);
+
+            const meta = document.createElement('div');
+            meta.className = 'text-xs text-gray-500 truncate';
+            function formatPrice(value) {
+                const rounded = Math.round(value * 100) / 100;
+                return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
+            }
+            const price = item.price ? formatPrice(item.price) + ' ' + (item.currency || '') : '';
+            meta.textContent = [price, item.search_name].filter(Boolean).join(' · ');
+            info.appendChild(meta);
+
+            a.appendChild(info);
+            return a;
+        }
+
+        async function refresh() {
+            try {
+                const res = await fetch('/notifications');
+                if (!res.ok) return;
+                const data = await res.json();
+
+                if (data.count > 0) {
+                    badge.textContent = data.count > 99 ? '99+' : String(data.count);
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+
+                list.innerHTML = '';
+                if (!data.items.length) {
+                    emptyMsg.classList.remove('hidden');
+                } else {
+                    emptyMsg.classList.add('hidden');
+                    data.items.forEach((item) => list.appendChild(buildItem(item)));
+                }
+            } catch (err) {
+                /* silencioso: no bloquear la UI por un fallo de red puntual */
+            }
+        }
+
+        bell.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const wasHidden = panel.classList.contains('hidden');
+            panel.classList.toggle('hidden');
+            if (wasHidden) refresh();
+        });
+        document.addEventListener('click', (e) => {
+            if (!panel.contains(e.target) && !bell.contains(e.target)) {
+                panel.classList.add('hidden');
+            }
+        });
+
+        refresh();
+        setInterval(refresh, 45000);
+    })();
+    </script>
+    {% endif %}
+    <main class="max-w-4xl mx-auto px-4 py-6">
+        {% block content %}{% endblock %}
+    </main>
+    <script>
+    document.addEventListener('submit', function (e) {
+        if (e.defaultPrevented) return;  // ej. un confirm() cancelado
+        const form = e.target;
+        if (!(form instanceof HTMLFormElement)) return;
+        const btn = form.querySelector('button[type="submit"]');
+        if (!btn || btn.disabled) return;
+
+        btn.disabled = true;
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+        const label = btn.dataset.loadingText || 'Procesando...';
+        btn.innerHTML =
+            '<svg class="animate-spin h-4 w-4 inline-block align-[-2px] mr-1.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">' +
+            '<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>' +
+            '<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"></path>' +
+            '</svg>' + label;
+    });
+    </script>
+</body>
+</html>

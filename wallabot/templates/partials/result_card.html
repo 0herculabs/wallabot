@@ -1,0 +1,53 @@
+<div class="bg-white rounded-lg shadow p-4 flex flex-col sm:flex-row gap-3 sm:gap-4" id="result-{{ result.id }}">
+    <div class="flex gap-3 sm:gap-4 min-w-0 flex-1">
+        {% if result.image_url %}
+        <img src="{{ result.image_url }}" alt="" class="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded flex-shrink-0">
+        {% endif %}
+        <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5 mb-0.5">
+                {% if result.platform == 'cashconverters' %}
+                <img src="/static/cashconverters-logo.png" alt="CashConverters" title="CashConverters" class="h-3.5 w-3.5 rounded-sm flex-shrink-0">
+                {% elif result.platform == 'cex' %}
+                <img src="/static/cex-logo.svg" alt="CeX" title="CeX" class="h-3.5 w-3.5 rounded-sm flex-shrink-0">
+                {% elif result.platform == 'milanuncios' %}
+                <img src="/static/milanuncios-logo.png" alt="Milanuncios" title="Milanuncios" class="h-3.5 w-3.5 rounded-sm flex-shrink-0">
+                {% else %}
+                <img src="/static/wallapop-logo.svg" alt="Wallapop" title="Wallapop" class="h-3.5 flex-shrink-0">
+                {% endif %}
+            </div>
+            <a href="{{ result.url }}" target="_blank" rel="noopener" class="font-medium text-slate-800 hover:underline break-words">
+                {{ result.title }}
+            </a>
+            <div class="text-sm text-gray-600 mt-0.5">
+                {% if result.previous_price and result.price and result.previous_price != result.price %}
+                    <span class="line-through text-gray-400">{{ result.previous_price|price }} €</span>
+                    <span class="font-semibold {% if result.price < result.previous_price %}text-emerald-700{% else %}text-red-600{% endif %}">
+                        {{ result.price|price }} {{ result.currency or '' }}
+                    </span>
+                {% else %}
+                    {{ result.price|price }} {{ result.currency or '' }}
+                {% endif %}
+                {% if result.location %} · {{ result.location }}{% endif %}
+                {% if result.platform == 'wallapop' and result.shipping_allowed %} · envío disponible{% endif %}
+            </div>
+            <div class="text-xs text-gray-400 mt-1">Visto por primera vez: {{ result.first_seen_at|friendly_datetime }}</div>
+        </div>
+    </div>
+    <div class="flex-shrink-0 sm:self-center">
+        {% if discarded %}
+        <form action="/searches/{{ result.search_id }}/results/{{ result.id }}/restore" method="post">
+            <button type="submit"
+                    class="w-full sm:w-auto text-sm text-emerald-700 border border-emerald-200 rounded px-3 py-1.5 hover:bg-emerald-50">
+                Restaurar
+            </button>
+        </form>
+        {% else %}
+        <form action="/searches/{{ result.search_id }}/results/{{ result.id }}/discard" method="post">
+            <button type="submit"
+                    class="w-full sm:w-auto text-sm text-red-600 border border-red-200 rounded px-3 py-1.5 hover:bg-red-50">
+                Eliminar
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>

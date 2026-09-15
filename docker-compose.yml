@@ -1,0 +1,26 @@
+services:
+  wallabot:
+    build: .
+    ports:
+      - "${PORT:-12185}:8000"
+    environment:
+      DB_PATH: /data/wallabot.db
+      DEFAULT_LATITUDE: ${DEFAULT_LATITUDE:-40.4168}
+      DEFAULT_LONGITUDE: ${DEFAULT_LONGITUDE:--3.7038}
+      TIMEZONE: ${TIMEZONE:-Europe/Madrid}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
+    volumes:
+      - wallabot-data:/data
+    restart: unless-stopped
+
+volumes:
+  wallabot-data:

@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block title %}Mis búsquedas — Wallabot{% endblock %}
+{% block content %}
+<div class="flex flex-col md:flex-row gap-4 md:gap-6 md:items-start">
+    <button id="categories-toggle" type="button"
+            class="md:hidden inline-flex items-center gap-2 border border-gray-300 bg-white px-3 py-2 rounded-lg text-sm self-start shadow-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.5" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
+        </svg>
+        Categorías
+    </button>
+
+    <div id="categories-overlay" class="hidden fixed inset-0 bg-black/30 z-30 md:hidden"></div>
+
+    <aside id="categories-sidebar"
+           class="hidden md:block md:w-60 md:flex-shrink-0 fixed md:static top-0 left-0 h-full md:h-auto w-72 max-w-[85vw] bg-white z-40 p-4 md:p-0 overflow-y-auto shadow-lg md:shadow-none">
+        <div class="flex items-center justify-between mb-3 md:hidden">
+            <span class="font-semibold">Categorías</span>
+            <button id="categories-close" type="button" class="text-gray-500 text-2xl leading-none px-1" aria-label="Cerrar">&times;</button>
+        </div>
+
+        <div class="md:bg-white md:border md:border-gray-200 md:rounded-xl md:shadow-sm md:p-3">
+            <nav class="space-y-0.5 text-sm">
+                <a href="/?category=all"
+                   class="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors {% if selected == 'all' %}bg-slate-800 text-white font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4 flex-shrink-0">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+                    </svg>
+                    <span class="flex-1 truncate">Todo</span>
+                    <span class="text-xs {% if selected == 'all' %}text-slate-300{% else %}text-gray-400{% endif %}">{{ searches|length }}</span>
+                </a>
+
+                <a href="/?category=none"
+                   class="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors {% if selected is none %}bg-slate-800 text-white font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4 flex-shrink-0">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-19.5 0v6a2.25 2.25 0 0 0 2.25 2.25h15a2.25 2.25 0 0 0 2.25-2.25v-6m-19.5 0h19.5M4.5 9.75v-2.25a2.25 2.25 0 0 1 2.25-2.25h1.5c.414 0 .809.166 1.1.457l1.243 1.243a1.5 1.5 0 0 0 1.061.44h5.096a2.25 2.25 0 0 1 2.25 2.25v.11" />
+                    </svg>
+                    <span class="flex-1 truncate">Sin categoría</span>
+                    <span class="text-xs {% if selected is none %}text-slate-300{% else %}text-gray-400{% endif %}">{{ grouped_searches[None]|length }}</span>
+                </a>
+
+                {% for category in categories %}
+                <div class="group flex items-center">
+                    <a href="/?category={{ category.id }}"
+                       class="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg min-w-0 transition-colors {% if selected == category.id %}bg-slate-800 text-white font-medium{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4 flex-shrink-0">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-19.5 0v6a2.25 2.25 0 0 0 2.25 2.25h15a2.25 2.25 0 0 0 2.25-2.25v-6m-19.5 0h19.5M4.5 9.75v-2.25a2.25 2.25 0 0 1 2.25-2.25h1.5c.414 0 .809.166 1.1.457l1.243 1.243a1.5 1.5 0 0 0 1.061.44h5.096a2.25 2.25 0 0 1 2.25 2.25v.11" />
+                        </svg>
+                        <span class="flex-1 truncate">{{ category.name }}</span>
+                        <span class="text-xs {% if selected == category.id %}text-slate-300{% else %}text-gray-400{% endif %}">{{ grouped_searches.get(category.id, [])|length }}</span>
+                    </a>
+                    <form action="/categories/{{ category.id }}/delete" method="post"
+                          class="opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
+                          onsubmit="return confirm('¿Eliminar la categoría «{{ category.name }}»? Sus búsquedas volverán a Sin categoría.');">
+                        <button type="submit" class="text-gray-400 hover:text-red-600 p-1.5 rounded" title="Eliminar categoría" aria-label="Eliminar categoría">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-3.5 h-3.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+                {% endfor %}
+            </nav>
+
+            <details class="mt-3 pt-3 border-t border-gray-100">
+                <summary class="cursor-pointer list-none flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-800 px-1 py-1 font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Nueva categoría
+                </summary>
+                <form action="/categories" method="post" class="mt-2 flex gap-2">
+                    <input type="text" name="name" required placeholder="Nombre de la categoría" autofocus
+                           class="flex-1 min-w-0 border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-slate-800/20 focus:border-slate-400">
+                    <button type="submit" class="bg-slate-800 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-slate-700">
+                        Crear
+                    </button>
+                </form>
+            </details>
+        </div>
+    </aside>
+
+    <div class="flex-1 min-w-0">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+            <h1 class="text-xl font-semibold">Mis búsquedas</h1>
+            <div class="flex items-center gap-2">
+                <form action="/searches/scan-all" method="post">
+                    <button type="submit"
+                            data-loading-text="Escaneando todo..."
+                            class="inline-flex items-center gap-1.5 border border-gray-300 bg-white px-3 py-2 rounded-lg text-sm hover:bg-gray-50 shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="1.5" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                        </svg>
+                        Escanear todo
+                    </button>
+                </form>
+                <a href="/searches/new" class="bg-slate-800 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-700 shadow-sm">
+                    + Nueva búsqueda
+                </a>
+            </div>
+        </div>
+
+        {% if selected != 'all' %}
+        <div class="flex items-center gap-2 mb-4 text-sm text-gray-500">
+            <span>Viendo: <span class="font-medium text-gray-700">{{ sections[0].name if sections else '' }}</span></span>
+            <a href="/?category=all" class="text-slate-600 hover:underline">Ver todo</a>
+        </div>
+        {% else %}
+        <div class="mb-4"></div>
+        {% endif %}
+
+        {% if not searches %}
+        <p class="text-gray-500">Todavía no tienes ninguna búsqueda. Crea la primera.</p>
+        {% endif %}
+
+        {% for section in sections %}
+        <section id="cat-{{ section.param }}" class="mb-6">
+            {% if selected == 'all' %}
+            <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ section.name }}</h2>
+            {% endif %}
+            {% if section.searches %}
+            <div class="space-y-3">
+                {% for search in section.searches %}
+                <div class="bg-white rounded-lg shadow p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 {% if not search.is_active %}opacity-60{% endif %}">
+                    <div class="min-w-0">
+                        <a href="/searches/{{ search.id }}" class="font-medium text-slate-800 hover:underline break-words">
+                            {{ search.name }}
+                        </a>
+                        {% include "partials/platform_icons.html" %}
+                        {% if unseen_counts[search.id] > 0 %}
+                        <span class="ml-2 inline-block bg-emerald-600 text-white text-xs rounded-full px-2 py-0.5">
+                            {{ unseen_counts[search.id] }} nuevo(s)
+                        </span>
+                        {% endif %}
+                        <div class="text-sm text-gray-500 mt-1">
+                            "{{ search.title_keywords }}"
+                            {% if search.min_price %} · desde {{ search.min_price|price }} €{% endif %}
+                            {% if search.max_price %} · hasta {{ search.max_price|price }} €{% endif %}
+                            · cada {{ search.scan_interval_minutes }} min
+                        </div>
+                        <div class="text-xs text-gray-400 mt-1">
+                            {% if search.last_scan_at %}
+                                Último escaneo: {{ search.last_scan_at|friendly_datetime }}
+                                {% with status = search.last_scan_status %}{% include "partials/scan_status_icon.html" %}{% endwith %}
+                            {% else %}
+                                Sin escanear todavía
+                            {% endif %}
+                            {% if not search.is_active %} · Pausada{% endif %}
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1 text-sm flex-wrap sm:flex-nowrap sm:flex-shrink-0">
+                        <a href="/searches/{{ search.id }}/edit" class="text-slate-600 hover:bg-gray-100 rounded px-2 py-1.5">Editar</a>
+                        <details class="relative">
+                            <summary class="flex items-center gap-1 text-slate-600 hover:bg-gray-100 rounded px-2 py-1.5 cursor-pointer list-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-3.5 h-3.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h18M16.5 3 21 7.5m0 0L16.5 12M21 7.5H3" />
+                                </svg>
+                                Mover
+                            </summary>
+                            <form action="/searches/{{ search.id }}/move" method="post"
+                                  class="absolute right-0 sm:left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg p-3 z-10 w-56">
+                                <label class="block text-xs font-medium text-gray-500 mb-1.5">Mover a categoría</label>
+                                <select name="category_id" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-slate-800/20">
+                                    <option value="" {% if search.category_id is none %}selected{% endif %}>Sin categoría</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}" {% if search.category_id == category.id %}selected{% endif %}>{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="w-full bg-slate-800 text-white px-2 py-1.5 rounded-lg text-sm font-medium hover:bg-slate-700">
+                                    Mover
+                                </button>
+                            </form>
+                        </details>
+                        <form action="/searches/{{ search.id }}/toggle" method="post">
+                            <button type="submit" class="text-slate-600 hover:bg-gray-100 rounded px-2 py-1.5">
+                                {% if search.is_active %}Pausar{% else %}Reactivar{% endif %}
+                            </button>
+                        </form>
+                        <form action="/searches/{{ search.id }}/delete" method="post"
+                              onsubmit="return confirm('¿Eliminar esta búsqueda y todos sus resultados?');">
+                            <button type="submit" class="text-red-600 hover:bg-red-50 rounded px-2 py-1.5">Borrar</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-sm text-gray-400">Sin búsquedas en esta categoría.</p>
+            {% endif %}
+        </section>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+(function () {
+    const toggleBtn = document.getElementById('categories-toggle');
+    const closeBtn = document.getElementById('categories-close');
+    const sidebar = document.getElementById('categories-sidebar');
+    const overlay = document.getElementById('categories-overlay');
+    if (!toggleBtn || !sidebar || !overlay) return;
+
+    function openSidebar() {
+        sidebar.classList.remove('hidden');
+        overlay.classList.remove('hidden');
+    }
+    function closeSidebar() {
+        sidebar.classList.add('hidden');
+        overlay.classList.add('hidden');
+    }
+
+    toggleBtn.addEventListener('click', openSidebar);
+    closeBtn.addEventListener('click', closeSidebar);
+    overlay.addEventListener('click', closeSidebar);
+})();
+</script>
+{% endblock %}
